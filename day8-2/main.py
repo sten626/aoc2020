@@ -5,8 +5,6 @@ def init_argparser():
     parser.add_argument('file')
     return parser
 
-accumulator = 0
-
 def parse_program(file):
     program = []
 
@@ -17,19 +15,7 @@ def parse_program(file):
 
     return program
 
-def executeInstruction(program, cursor, past_cursors, end):
-    if cursor == end:
-        return True
-    if cursor in past_cursors:
-        return False
-
-    global accumulator
-    new_past_cursors = set(past_cursors)
-    new_past_cursors.add(cursor)
-    line = program[cursor]
-    inst = line[0]
-    val = line[1]
-
+def executeInstruction(inst, val, cursor, accumulator):
     if inst == 'acc':
         accumulator += val
         cursor += 1
@@ -40,30 +26,54 @@ def executeInstruction(program, cursor, past_cursors, end):
     else:
         raise RuntimeError('Invalid instruction')
 
-    result = executeInstruction(program, cursor, new_past_cursors, end)
+    return cursor, accumulator
 
-    if result:
-        return result
+program = parse_program('input.txt')
+cursor = 0
+accumulator = 0
+seen_cursors = set()
+maybe_bad_cursor_and_accums = []
 
-    if inst == 'acc':
-        accumulator -= val
-        return False
-    elif inst == 'jmp':
-        # Try nop instead
-        cursor = cursor - val + 1
-    elif inst == 'nop':
-        # Try jmp instead
-        cursor = cursor - 1 + val
+while True:
+    # Main loop. Halt when hit infinite loop.
+    if cursor in seen_cursors:
+        break
 
-    return executeInstruction(program, cursor, new_past_cursors, end)
+    seen_cursors.add(cursor)
+    inst, val = program[cursor]
 
-def main():
-    parser = init_argparser()
-    args = parser.parse_args()
-    program = parse_program(args.file)
+    if inst in {'jmp', 'nop'}:
+        maybe_bad_cursor_and_accums.append((cursor, accumulator))
+
+    cursor, accumulator = executeInstruction(inst, val, cursor, accumulator)
+
+target_cursor = len(program)
+
+while maybe_bad_cursor_and_accums:
+    seen_cursors = set()
+    cursor, accumulator = maybe_bad_cursor_and_accums.pop()
+    inst, val = program[cursor]
+
+    if inst == 'jmp':
+        inst = 'nop'
+    else:
+        inst = 'jmp'
+
+    seen_cursors.add(cursor)
+    cursor, accumulator = executeInstruction(inst, val, cursor, accumulator)
+    success = False
     
-    executeInstruction(program, 0, set(), len(program))
-    print('Accumulator is {}'.format(accumulator))
-    
-if __name__ == "__main__":
-    main()
+    while True:
+        if cursor == target_cursor:
+            success = True
+            break
+        if cursor in seen_cursors:
+            break
+
+        seen_cursors.add(cursor)
+        inst, val = program[cursor]
+        cursor, accumulator = executeInstruction(inst, val, cursor, accumulator)
+
+    if success:
+        print('Accumulator is {}'.format(accumulator))
+        break
