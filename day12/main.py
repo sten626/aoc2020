@@ -21,33 +21,55 @@ def parse_instructions(file):
     
     return instructions
 
-def process_instruction(instruction, ship_dir, ship_pos):
+def process_instruction(instruction, ship_pos, waypoint):
     inst, val = instruction
-    x, y = ship_pos
+    # x, y = ship_pos
 
     if inst == 'F':
-        inst = ship_dir
-
-    if inst == 'N':
+        x, y = ship_pos
+        x += waypoint[0] * val
+        y += waypoint[1] * val
+        ship_pos = x, y
+    elif inst == 'N':
+        # y += val
+        x, y = waypoint
         y += val
+        waypoint = x, y
     elif inst == 'S':
+        # y -= val
+        x, y = waypoint
         y -= val
+        waypoint = x, y
     elif inst == 'E':
+        # x += val
+        x, y = waypoint
         x += val
+        waypoint = x, y
     elif inst == 'W':
+        # x -= val
+        x, y = waypoint
         x -= val
+        waypoint = x, y
     elif inst == 'L':
-        ship_dir = process_turn(ship_dir, -val)
+        waypoint = process_turn(waypoint, -val)
     elif inst == 'R':
-        ship_dir = process_turn(ship_dir, val)
+        waypoint = process_turn(waypoint, val)
 
-    return ship_dir, (x, y)
+    return ship_pos, waypoint
 
-def process_turn(ship_dir, degrees):
-    cur_i = DIRECTIONS.index(ship_dir)
-    increment = int(degrees / 360 * 4)
-    new_i = (cur_i + increment) % 4
-    return DIRECTIONS[new_i]
+def process_turn(waypoint, degrees):
+    x, y = waypoint
+
+    if abs(degrees) == 180:
+        return -x, -y
+    if degrees == 90 or degrees == -270:
+        # 2, 1 -> 1, -2
+        return y, -x
+    if degrees == -90 or degrees == 270:
+        # 2, 1 -> -1, 2
+        return -y, x
+
+    raise RuntimeError('Other degrees {}'.format(degrees))
 
 def get_manhattan_distance(ship_pos):
     return abs(ship_pos[0]) + abs(ship_pos[1])
@@ -55,12 +77,12 @@ def get_manhattan_distance(ship_pos):
 argparser = init_argparser()
 args = argparser.parse_args()
 instructions = parse_instructions(args.file)
-ship_dir = 'E'
+# ship_dir = 'E'
 ship_pos = 0, 0
+waypoint = 10, 1
 
 for instruction in instructions:
-    ship_dir, ship_pos = process_instruction(instruction, ship_dir, ship_pos)
-    print(ship_dir, ship_pos)
+    ship_pos, waypoint = process_instruction(instruction, ship_pos, waypoint)
 
 manhattan_distance = get_manhattan_distance(ship_pos)
 print('Manhattan distance is: {}'.format(manhattan_distance))
