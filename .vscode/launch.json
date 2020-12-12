@@ -10,7 +10,7 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "args": ["day11/sample.txt"]
+      "args": ["day12/input.txt"]
     }
   ]
 }
