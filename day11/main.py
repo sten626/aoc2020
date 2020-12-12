@@ -47,6 +47,91 @@ def four_adjacent_seats_are_occupied(layout, row_i, col_i):
 
     return occupied >= 4
 
+def num_occupied_seats_in_sight(layout, row, col):
+    count = 0
+
+    # Up
+    for i in range(row - 1, -1, -1):
+        if layout[i][col] == '.':
+            continue
+        if layout[i][col] == '#':
+            count += 1
+        break
+    
+    # Down
+    for i in range(row + 1, len(layout)):
+        if layout[i][col] == '.':
+            continue
+        if layout[i][col] == '#':
+            count += 1
+        break
+
+    # Left
+    for i in range(col - 1, -1, -1):
+        if layout[row][i] == '.':
+            continue
+        if layout[row][i] == '#':
+            count += 1
+        break
+
+    # Right
+    for i in range(col + 1, len(layout[row])):
+        if layout[row][i] == '.':
+            continue
+        if layout[row][i] == '#':
+            count += 1
+        break
+
+    # Up+Left
+    i = row - 1
+    j = col - 1
+    while i >= 0 and j >= 0:
+        if layout[i][j] == '.':
+            i -= 1
+            j -= 1
+            continue
+        if layout[i][j] == '#':
+            count += 1
+        break
+
+    # Up+Right
+    i = row - 1
+    j = col + 1
+    while i >= 0 and j < len(layout[row]):
+        if layout[i][j] == '.':
+            i -= 1
+            j += 1
+            continue
+        if layout[i][j] == '#':
+            count += 1
+        break
+
+    # Down+Left
+    i = row + 1
+    j = col - 1
+    while i < len(layout) and j >= 0:
+        if layout[i][j] == '.':
+            i += 1
+            j -= 1
+            continue
+        if layout[i][j] == '#':
+            count += 1
+        break
+
+    # Down+Right
+    i = row + 1
+    j = col + 1
+    while i < len(layout) and j < len(layout[row]):
+        if layout[i][j] == '.':
+            i += 1
+            j += 1
+            continue
+        if layout[i][j] == '#':
+            count += 1
+        break
+
+    return count
+
 def apply_rules(layout):
     new_layout = []
     had_changes = False
@@ -58,13 +143,13 @@ def apply_rules(layout):
             seat = column[col_i]
 
             if seat == 'L':
-                if no_adjacent_occupied_seats(layout, row_i, col_i):
+                if num_occupied_seats_in_sight(layout, row_i, col_i) == 0:
                     new_column.append('#')
                     had_changes = True
                 else:
                     new_column.append('L')
             elif seat == '#':
-                if four_adjacent_seats_are_occupied(layout, row_i, col_i):
+                if num_occupied_seats_in_sight(layout, row_i, col_i) >= 5:
                     new_column.append('L')
                     had_changes = True
                 else:
